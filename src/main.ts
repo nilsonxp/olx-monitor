@@ -21,8 +21,8 @@ const scraperService = new ScraperService(
   notifier
 );
 
-// Schedule the job using the interval from config
-cron.schedule(config.interval, () => {
+// Função para executar o scraping
+const runScraping = () => {
   const currentConfig = loadConfig();
   logger.info('Starting scheduled scraping job...');
   for (const url of currentConfig.urls) {
@@ -30,4 +30,16 @@ cron.schedule(config.interval, () => {
       .then(() => logger.info(`Scraping completed for ${url}`))
       .catch(err => logger.error(err instanceof Error ? err : String(err)));
   }
+};
+
+// Executa imediatamente na primeira vez
+logger.info('OLX Monitor iniciado!');
+logger.info(`Intervalo configurado: ${config.interval} (formato cron)`);
+logger.info(`URLs para monitorar: ${config.urls.length}`);
+logger.info('Executando primeira verificação agora...');
+runScraping();
+
+// Schedule the job using the interval from config
+cron.schedule(config.interval, () => {
+  runScraping();
 });
