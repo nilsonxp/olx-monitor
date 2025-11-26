@@ -15,14 +15,14 @@ Se você já está familiarizado com a API do Telegram e já mexeu bom bots segu
 ### Usando Node
 
 1. Clonar ou fazer download do repositório `git clone https://github.com/carmolim/olx-monitor.git`
-1. Acessar a pasta onde os arquivos js se encontram `cd src`
+1. Acessar a pasta do projeto `cd olx-monitor`
 1. Instalar as dependências com o comando `npm install`
-1. Renomear o arquivo `example.env` para `.env` e incluir as informações do seu BOT e do seu grupo que irá receber as notificações
-1. Incluir as URLs que você quer que sejam monitoradas no arquivo `config.js`
-1. Definir qual o intervalo que você quer que as buscas sejam feitas no arquivo `config.js`
-1. Executar o script usando o comando `node index.js`
+1. Criar o arquivo `.env` na raiz do projeto e incluir as informações do seu BOT e do seu grupo que irá receber as notificações (veja seção "Configuração do Telegram" abaixo)
+1. Incluir as URLs que você quer que sejam monitoradas no arquivo `config.json` (formato JSON)
+1. Definir qual o intervalo que você quer que as buscas sejam feitas no arquivo `config.json` (formato cron)
+1. Executar o script usando o comando `npm run dev` (modo desenvolvimento) ou `npm run build && npm start` (modo produção)
 1. Acompanhar o andamento do script no Terminal
-1. Se correu tudo certo, dois novos arquivos foram criados dentro da pasta `data`: `ads.db` que é o banco de dados e o `scrapper.log` com os logs de execução do script
+1. Se correu tudo certo, a pasta `data/` será criada automaticamente com `ads.db` (banco de dados) e `scrapper.log` (logs de execução)
 
 ### Usando docker-compose
 
@@ -47,14 +47,19 @@ Depois de criar o seu bot, crie um grupo e convite o seu bot que você acabou de
 
 Depois de incluir o no grupo, basta digitar `/getgroupid@myidbot` e bot irá responder com o ID do chat. 
 
-#### Editando seu ambiênte
+#### Editando seu ambiente
 
-Dentro do repositório tem um arquivo chamado `example.env`, você precisa renomea-lo para apenas `.env` e preencher as informações que você acabou de pegar. 
+Crie um arquivo chamado `.env` na raiz do projeto e preencha as informações que você acabou de pegar. **Não use aspas** nos valores:
+
+```
+TELEGRAM_TOKEN=seu_token_aqui
+TELEGRAM_CHAT_ID=seu_chat_id_aqui
+```
 
 | Variável          | Exemplo                                |
 | ----------------- | -------------------------------------- |
 | TELEGRAM_TOKEN    | Token do seu bot gerado pelo BotFather |
-| TELEGRAM_CHAT\_ID | ID do seu chat                         |
+| TELEGRAM_CHAT_ID  | ID do seu chat                         |
 
 ### O que deve ser monitorado?
 
@@ -62,26 +67,47 @@ Eu não sei o que você está procurando no OLX, mas você precisa dizer para o 
 
 Recomendo utilizar filtros bem específicos para não gerar resultados com muitos itens. Como esse script irá varrer todos os resultados encontrados, pode ser possível que não seja possível passar por todos os resultados dentro do intervalo definido, isso pode fazer com que o Olx perceba uma quantidade alta de chamadas do seu IP e faça algum bloqueio. Isso nunca me aconteceu, mas pode acontecer.
 
-Você pode utilizar uma ou mais pesquisas, basta apenas incluir as `URLs` no arquivo `config.js` dentro da variável `URLs`
+Você pode utilizar uma ou mais pesquisas, basta apenas incluir as `URLs` no arquivo `config.json` dentro do array `urls`
 
 #### Exemplos
 
 ##### Apenas uma `URL`
 
-```
-config.urls = ['https://sp.olx.com.br/sao-paulo-e-regiao/centro/celulares/iphone?cond=1&cond=2&pe=1600&ps=600&q=iphone']
+```json
+{
+  "urls": [
+    "https://www.olx.com.br/sao-paulo-e-regiao/centro/celulares/iphone?cond=1&cond=2&pe=1600&ps=600&q=iphone"
+  ],
+  "interval": "*/5 * * * *",
+  "logger": {
+    "timestampFormat": "YYYY-MM-DD HH:mm:ss"
+  },
+  "inactiveThreshold": 3
+}
 ```
 
 ##### Várias `URLs`
 
-Para usar várias `URLs` você só precisa separa-las por vírgula.
+Para usar várias `URLs` você só precisa adicionar mais itens no array:
 
+```json
+{
+  "urls": [
+    "https://www.olx.com.br/sao-paulo-e-regiao/centro/celulares/iphone?cond=1&cond=2&pe=1600&ps=600&q=iphone",
+    "https://www.olx.com.br/sao-paulo-e-regiao/imoveis/venda?bae=2&bas=1&gsp=1&pe=600000&ps=100000&se=6&ss=2"
+  ],
+  "interval": "*/5 * * * *",
+  "logger": {
+    "timestampFormat": "YYYY-MM-DD HH:mm:ss"
+  },
+  "inactiveThreshold": 3
+}
 ```
-config.urls = [
-    'https://sp.olx.com.br/sao-paulo-e-regiao/centro/celulares/iphone?cond=1&cond=2&pe=1600&ps=600&q=iphone',
-    'https://sp.olx.com.br/sao-paulo-e-regiao/imoveis/venda?bae=2&bas=1&gsp=1&pe=600000&ps=100000&se=6&ss=2',
-]
-```
+
+**Nota sobre o intervalo**: O campo `interval` usa formato cron. Exemplos:
+- `*/5 * * * *` = a cada 5 minutos
+- `*/10 * * * *` = a cada 10 minutos
+- `0 * * * *` = a cada hora
 
 #### Dica
 
@@ -89,11 +115,18 @@ Quando mais específica sua busca for mais eficiente o script será, se você s�
 
 ## Funcionamento
 
-O funcionamamento do script é simples. Ele percorre um `array` de `URLs` copiadas do OLX, que já contém os filtros de preço mínimo, máximo e etc, encontra os anúncios dentro dessa página e inclui os anúncios encontrados em um banco de dados SQLite e também envia uma notificação para um BOT no Telegram. 
+O funcionamento do script é simples. Ele percorre um `array` de `URLs` copiadas do OLX (configuradas no arquivo `config.json`), que já contém os filtros de preço mínimo, máximo e etc, encontra os anúncios dentro dessas páginas e inclui os anúncios encontrados em um banco de dados SQLite e também envia uma notificação para um BOT no Telegram. 
 
 As entradas salvas no banco de dados são utilizadas posteriormente para detectar alterações nos preços, que também são notificadas através do Telegram.
+
+**Comandos disponíveis:**
+- `npm run dev` - Executa o projeto em modo desenvolvimento (usando ts-node)
+- `npm run build` - Compila o TypeScript para JavaScript
+- `npm start` - Executa o projeto compilado (após build)
 
 
 ## Considerações
 
-- Esse script só funciona com a versão brasileira do OLX, nos outros países a interface é diferente e o scrapper não consegue puxar as informações necessárias para funcionar. Porém a adaptação para outros países deve ser consideravalmente fácil de fazer. As alterações deverão ser feitas no arquivo `Scraper.js`
+- Esse script só funciona com a versão brasileira do OLX, nos outros países a interface é diferente e o scrapper não consegue puxar as informações necessárias para funcionar. Porém a adaptação para outros países deve ser consideravelmente fácil de fazer. As alterações deverão ser feitas no arquivo `ScraperService.ts`
+- O projeto foi migrado para TypeScript. O código fonte está em `src/` e é compilado para `dist/`
+- Requer Node.js versão 18 ou superior
