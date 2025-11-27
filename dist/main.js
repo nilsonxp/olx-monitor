@@ -18,12 +18,23 @@ const adRepository = new AdRepository_1.AdRepository(logger);
 const scraperLogRepository = new ScraperLogRepository_1.ScraperLogRepository(logger);
 const notifier = new Notifier_1.Notifier();
 const scraperService = new ScraperService_1.ScraperService(httpClient, logger, adRepository, scraperLogRepository, notifier);
-// Schedule the job using the interval from config
-node_cron_1.default.schedule(config_1.config.interval, () => {
+// Função para executar o scraping
+const runScraping = () => {
+    const currentConfig = (0, config_1.loadConfig)();
     logger.info('Starting scheduled scraping job...');
-    for (const url of config_1.config.urls) {
+    for (const url of currentConfig.urls) {
         scraperService.scrape(url)
             .then(() => logger.info(`Scraping completed for ${url}`))
             .catch(err => logger.error(err instanceof Error ? err : String(err)));
     }
+};
+// Executa imediatamente na primeira vez
+logger.info('OLX Monitor iniciado!');
+logger.info(`Intervalo configurado: ${config_1.config.interval} (formato cron)`);
+logger.info(`URLs para monitorar: ${config_1.config.urls.length}`);
+logger.info('Executando primeira verificação agora...');
+runScraping();
+// Schedule the job using the interval from config
+node_cron_1.default.schedule(config_1.config.interval, () => {
+    runScraping();
 });

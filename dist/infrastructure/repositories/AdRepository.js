@@ -17,7 +17,10 @@ class AdRepository {
                     return reject(error);
                 if (!row)
                     return reject(new Error('No ad with this ID was found'));
-                resolve(new Ad_1.Ad(row));
+                resolve(new Ad_1.Ad({
+                    ...row,
+                    isActive: row.isActive === 1
+                }));
             });
         });
     }
@@ -41,8 +44,32 @@ class AdRepository {
     }
     async updateAd(ad) {
         this.logger.debug('AdRepository: updateAd');
-        const query = `UPDATE ads SET price = ?, lastUpdate = ? WHERE id = ?`;
-        const values = [ad.price, new Date().toISOString(), ad.id];
+        const query = `UPDATE ads SET price = ?, lastUpdate = ?, isActive = ?, missingCount = 0 WHERE id = ?`;
+        const values = [ad.price, new Date().toISOString(), ad.isActive ? 1 : 0, ad.id];
+        return new Promise((resolve, reject) => {
+            database_1.db.run(query, values, (error) => {
+                if (error)
+                    return reject(error);
+                resolve();
+            });
+        });
+    }
+    async incrementMissingCount(id) {
+        this.logger.debug('AdRepository: incrementMissingCount');
+        const query = `UPDATE ads SET missingCount = missingCount + 1 WHERE id = ?`;
+        const values = [id];
+        return new Promise((resolve, reject) => {
+            database_1.db.run(query, values, (error) => {
+                if (error)
+                    return reject(error);
+                resolve();
+            });
+        });
+    }
+    async resetMissingCount(id) {
+        this.logger.debug('AdRepository: resetMissingCount');
+        const query = `UPDATE ads SET missingCount = 0 WHERE id = ?`;
+        const values = [id];
         return new Promise((resolve, reject) => {
             database_1.db.run(query, values, (error) => {
                 if (error)

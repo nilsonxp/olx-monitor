@@ -34,6 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.config = void 0;
+exports.loadConfig = loadConfig;
 const dotenv = __importStar(require("dotenv"));
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
@@ -50,5 +51,21 @@ exports.config = {
     logger: {
         logFilePath: path.resolve(process.env.LOG_FILE || './data/scrapper.log'),
         timestampFormat: jsonConfig.logger.timestampFormat
-    }
+    },
+    inactiveThreshold: jsonConfig.inactiveThreshold
 };
+function loadConfig() {
+    const latestJson = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    return {
+        urls: latestJson.urls,
+        interval: latestJson.interval,
+        telegramChatID: process.env.TELEGRAM_CHAT_ID || '',
+        telegramToken: process.env.TELEGRAM_TOKEN || '',
+        dbFile: path.resolve(process.env.DB_FILE || './data/ads.db'),
+        logger: {
+            logFilePath: path.resolve(process.env.LOG_FILE || './data/scrapper.log'),
+            timestampFormat: latestJson.logger.timestampFormat
+        },
+        inactiveThreshold: latestJson.inactiveThreshold
+    };
+}

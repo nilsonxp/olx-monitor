@@ -24,7 +24,8 @@ exports.db.serialize(() => {
       price INTEGER,
       created TEXT,
       lastUpdate TEXT,
-      isActive INTEGER DEFAULT 1
+      isActive INTEGER DEFAULT 1,
+      missingCount INTEGER DEFAULT 0
     )
   `);
     exports.db.run(`

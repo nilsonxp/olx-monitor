@@ -80,7 +80,7 @@ class ScraperService {
             page++;
         } while (nextPage);
         this.logger.info('Valid ads: ' + validAds);
-        // Cleanup: Mark ads not found in this scrape as inactive
+        // Cleanup with debounce: handle missing ads and mark inactive after N misses
         await this.cleanupInactiveAds(searchTerm, foundAdIds);
         if (validAds) {
             const averagePrice = sumPrices / validAds;
@@ -145,15 +145,29 @@ class ScraperService {
         }
     }
     async cleanupInactiveAds(searchTerm, foundAdIds) {
+        var _a;
         try {
             this.logger.info(`Checking for inactive ads for search term: ${searchTerm}`);
             const existingAds = await this.adRepository.getAdsBySearchTerm(searchTerm);
+            // Load threshold dynamically from config.json each run
+            const { loadConfig } = await Promise.resolve().then(() => __importStar(require('../../config')));
+            const currentConfig = loadConfig();
+            const INACTIVE_THRESHOLD = (_a = currentConfig.inactiveThreshold) !== null && _a !== void 0 ? _a : 3;
             let inactiveCount = 0;
             for (const ad of existingAds) {
                 if (!foundAdIds.has(ad.id)) {
-                    this.logger.info(`Marking ad ${ad.id} as inactive - no longer found in results`);
-                    await this.adRepository.markAdAsInactive(ad.id);
-                    inactiveCount++;
+                    await this.adRepository.incrementMissingCount(ad.id);
+                    this.logger.info(`Ad ${ad.id} not found this run (increment missingCount)`);
+                    // Fetch latest missingCount to decide marking inactive
+                    const latest = await this.adRepository.getAd(ad.id).catch(() => null);
+                    if (latest && latest.missingCount >= INACTIVE_THRESHOLD) {
+                        this.logger.info(`Marking ad ${ad.id} as inactive after ${INACTIVE_THRESHOLD} misses`);
+                        await this.adRepository.markAdAsInactive(ad.id);
+                        inactiveCount++;
+                    }
+                }
+                else {
+                    await this.adRepository.resetMissingCount(ad.id);
                 }
             }
             if (inactiveCount > 0) {

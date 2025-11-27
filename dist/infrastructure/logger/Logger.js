@@ -34,20 +34,50 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Logger = void 0;
-const SimpleNodeLogger = __importStar(require("simple-node-logger"));
 const config_1 = require("../../config");
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
 class Logger {
     constructor() {
-        this.logger = SimpleNodeLogger.createSimpleLogger(config_1.config.logger);
+        this.logFilePath = config_1.config.logger.logFilePath;
+        // Garante que o diretório existe
+        const logDir = path.dirname(this.logFilePath);
+        if (!fs.existsSync(logDir)) {
+            fs.mkdirSync(logDir, { recursive: true });
+        }
+    }
+    formatTimestamp() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+    writeLog(level, message) {
+        const timestamp = this.formatTimestamp();
+        const logMessage = `[${timestamp}] [${level}] ${message}\n`;
+        // Escreve no console
+        console.log(logMessage.trim());
+        // Escreve no arquivo
+        try {
+            fs.appendFileSync(this.logFilePath, logMessage);
+        }
+        catch (error) {
+            console.error('Error writing to log file:', error);
+        }
     }
     info(message) {
-        this.logger.info(message);
+        this.writeLog('INFO', message);
     }
     error(message) {
-        this.logger.error(message instanceof Error ? message.stack || message.message : message);
+        const errorMessage = message instanceof Error ? (message.stack || message.message) : message;
+        this.writeLog('ERROR', errorMessage);
     }
     debug(message) {
-        this.logger.debug(message);
+        this.writeLog('DEBUG', message);
     }
 }
 exports.Logger = Logger;
