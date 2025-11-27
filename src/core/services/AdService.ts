@@ -35,7 +35,7 @@ export class AdService {
     await this.adRepository.createAd(ad);
     this.logger.info(`Ad ${ad.id} added to the database`);
     if (ad.notify) {
-      const msg = `New ad found!\n${ad.title} - R$${ad.price}\n\n${ad.url}`;
+      const msg = `🆕 Novo anúncio encontrado!\n\n${ad.title} - R$ ${ad.price}\n\n${ad.url}`;
       await this.notifier.sendNotification(msg, ad.id);
     }
   }
@@ -53,7 +53,7 @@ export class AdService {
       this.logger.info('Price changed for ad: ' + ad.id);
       if (ad.price < saved.price) {
         const percentage = Math.abs(Math.round(((ad.price - saved.price) / saved.price) * 100));
-        const msg = `Price drop found! ${percentage}% OFF!\nFrom R$${saved.price} to R$${ad.price}\n\n${ad.url}`;
+        const msg = `💰 Redução de preço encontrada! ${percentage}% OFF!\n\nDe R$ ${saved.price} para R$ ${ad.price}\n\n${ad.url}`;
         await this.notifier.sendNotification(msg, ad.id);
       }
     }

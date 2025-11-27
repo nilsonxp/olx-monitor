@@ -55,7 +55,7 @@ export class Ad {
     }
     if (this.notify) {
       try {
-        const msg = `New ad found!\n${this.title} - R$${this.price}\n\n${this.url}`;
+        const msg = `🆕 Novo anúncio encontrado!\n\n${this.title} - R$ ${this.price}\n\n${this.url}`;
         await notifier.sendNotification(msg, this.id);
       } catch (error) {
         logger.error(error instanceof Error ? error : String(error));
@@ -84,7 +84,7 @@ export class Ad {
         const decreasePercentage = Math.abs(
           Math.round(((this.price - this.saved.price) / this.saved.price) * 100)
         );
-        const msg = `Price drop found! ${decreasePercentage}% OFF!\nFrom R$${this.saved.price} to R$${this.price}\n\n${this.url}`;
+        const msg = `💰 Redução de preço encontrada! ${decreasePercentage}% OFF!\n\nDe R$ ${this.saved.price} para R$ ${this.price}\n\n${this.url}`;
         try {
           await notifier.sendNotification(msg, this.id);
         } catch (error) {
