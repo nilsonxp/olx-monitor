@@ -2,13 +2,15 @@ import { Ad } from '../entities/Ad';
 import { IAdRepository } from '../interfaces/IAdRepository';
 import { ILogger } from '../interfaces/ILogger';
 import { INotifier } from '../interfaces/INotifier';
+import { AdDetailsService } from './AdDetailsService';
 
 // AdService.ts
 export class AdService {
   constructor(
     private readonly adRepository: IAdRepository,
     private readonly logger: ILogger,
-    private readonly notifier: INotifier
+    private readonly notifier: INotifier,
+    private readonly adDetailsService?: AdDetailsService
   ) {}
 
   async process(ad: Ad): Promise<void> {
@@ -31,11 +33,69 @@ export class AdService {
     }
   }
 
+  private isVehicleAd(ad: Ad): boolean {
+    // Verifica se é um anúncio de veículo pela URL
+    return ad.url.includes('/autos-e-pecas/') || 
+           ad.url.includes('/carros-vans-e-utilitarios/') ||
+           ad.url.includes('/motos/') ||
+           ad.url.includes('/caminhoes/');
+  }
+
+  private formatMessageWithDetails(ad: Ad, details: any): string {
+    let msg = `🆕 Novo anúncio encontrado!\n\n${ad.title} - R$ ${ad.price.toLocaleString('pt-BR')}\n\n`;
+    
+    if (details) {
+      // Quilometragem
+      if (details.mileage) {
+        msg += `🛣️ Quilometragem: ${details.mileage.toLocaleString('pt-BR')} km\n\n`;
+      }
+      
+      msg += `📊 Referência de Preço:\n`;
+      
+      if (details.fipePrice) {
+        msg += `🏷️ Preço FIPE: R$ ${details.fipePrice.toLocaleString('pt-BR')}\n`;
+      }
+      
+      if (details.averagePrice) {
+        msg += `📈 Preço Médio OLX: R$ ${details.averagePrice.toLocaleString('pt-BR')}\n`;
+      }
+      
+      if (details.priceMin && details.priceMax) {
+        msg += `📉 Faixa: R$ ${details.priceMin.toLocaleString('pt-BR')} - R$ ${details.priceMax.toLocaleString('pt-BR')}\n`;
+      }
+      
+      if (details.vehicleCount) {
+        msg += `📊 Baseado em ${details.vehicleCount} veículos\n\n`;
+      } else {
+        msg += `\n`;
+      }
+    }
+    
+    msg += `${ad.url}`;
+    return msg;
+  }
+
   private async addNewAd(ad: Ad): Promise<void> {
     await this.adRepository.createAd(ad);
     this.logger.info(`Ad ${ad.id} added to the database`);
     if (ad.notify) {
-      const msg = `🆕 Novo anúncio encontrado!\n\n${ad.title} - R$ ${ad.price}\n\n${ad.url}`;
+      let msg = '';
+      
+      // Se for anúncio de veículo e tiver o serviço de detalhes, busca automaticamente
+      if (this.isVehicleAd(ad) && this.adDetailsService) {
+        try {
+          this.logger.debug(`Buscando detalhes automáticos para anúncio de veículo: ${ad.id}`);
+          const details = await this.adDetailsService.getAdDetails(ad.url);
+          msg = this.formatMessageWithDetails(ad, details);
+        } catch (error) {
+          this.logger.error(`Erro ao buscar detalhes automáticos: ${error instanceof Error ? error.message : String(error)}`);
+          // Fallback para mensagem sem detalhes
+          msg = `🆕 Novo anúncio encontrado!\n\n${ad.title} - R$ ${ad.price.toLocaleString('pt-BR')}\n\n${ad.url}`;
+        }
+      } else {
+        msg = `🆕 Novo anúncio encontrado!\n\n${ad.title} - R$ ${ad.price.toLocaleString('pt-BR')}\n\n${ad.url}`;
+      }
+      
       await this.notifier.sendNotification(msg, ad.id);
     }
   }
@@ -53,7 +113,33 @@ export class AdService {
       this.logger.info('Price changed for ad: ' + ad.id);
       if (ad.price < saved.price) {
         const percentage = Math.abs(Math.round(((ad.price - saved.price) / saved.price) * 100));
-        const msg = `💰 Redução de preço encontrada! ${percentage}% OFF!\n\nDe R$ ${saved.price} para R$ ${ad.price}\n\n${ad.url}`;
+        let msg = `💰 Redução de preço encontrada! ${percentage}% OFF!\n\nDe R$ ${saved.price.toLocaleString('pt-BR')} para R$ ${ad.price.toLocaleString('pt-BR')}\n\n`;
+        
+        // Se for anúncio de veículo, inclui detalhes atualizados
+        if (this.isVehicleAd(ad) && this.adDetailsService) {
+          try {
+            const details = await this.adDetailsService.getAdDetails(ad.url);
+            if (details) {
+              // Quilometragem
+              if (details.mileage) {
+                msg += `🛣️ Quilometragem: ${details.mileage.toLocaleString('pt-BR')} km\n\n`;
+              }
+              
+              msg += `📊 Referência de Preço:\n`;
+              if (details.fipePrice) {
+                msg += `🏷️ Preço FIPE: R$ ${details.fipePrice.toLocaleString('pt-BR')}\n`;
+              }
+              if (details.averagePrice) {
+                msg += `📈 Preço Médio OLX: R$ ${details.averagePrice.toLocaleString('pt-BR')}\n`;
+              }
+              msg += `\n`;
+            }
+          } catch (error) {
+            this.logger.debug(`Erro ao buscar detalhes na redução de preço: ${error instanceof Error ? error.message : String(error)}`);
+          }
+        }
+        
+        msg += `${ad.url}`;
         await this.notifier.sendNotification(msg, ad.id);
       }
     }

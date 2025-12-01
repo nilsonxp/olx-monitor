@@ -40,12 +40,13 @@ const UrlUtils_1 = require("../utils/UrlUtils");
 const PriceUtils_1 = require("../utils/PriceUtils");
 const cheerio = __importStar(require("cheerio"));
 class ScraperService {
-    constructor(httpClient, logger, adRepository, scraperLogRepository, notifier) {
+    constructor(httpClient, logger, adRepository, scraperLogRepository, notifier, adDetailsService) {
         this.httpClient = httpClient;
         this.logger = logger;
         this.adRepository = adRepository;
         this.scraperLogRepository = scraperLogRepository;
         this.notifier = notifier;
+        this.adDetailsService = adDetailsService;
     }
     async scrape(url) {
         let page = 1;
@@ -108,7 +109,7 @@ class ScraperService {
                 return false;
             this.logger.info(`Checking new ads for: ${searchTerm}`);
             this.logger.info('Ads found: ' + adList.length);
-            const adService = new AdService_1.AdService(this.adRepository, this.logger, this.notifier);
+            const adService = new AdService_1.AdService(this.adRepository, this.logger, this.notifier, this.adDetailsService);
             for (const advert of adList) {
                 const ad = new Ad_1.Ad({
                     id: advert.listId,

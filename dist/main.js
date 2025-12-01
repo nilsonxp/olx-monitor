@@ -9,6 +9,7 @@ const AdRepository_1 = require("./infrastructure/repositories/AdRepository");
 const ScraperLogRepository_1 = require("./infrastructure/repositories/ScraperLogRepository");
 const Notifier_1 = require("./infrastructure/notification/Notifier");
 const ScraperService_1 = require("./core/services/ScraperService");
+const AdDetailsService_1 = require("./core/services/AdDetailsService");
 const config_1 = require("./config");
 const node_cron_1 = __importDefault(require("node-cron"));
 // Instantiate dependencies
@@ -17,7 +18,9 @@ const httpClient = new HttpClient_1.HttpClient();
 const adRepository = new AdRepository_1.AdRepository(logger);
 const scraperLogRepository = new ScraperLogRepository_1.ScraperLogRepository(logger);
 const notifier = new Notifier_1.Notifier();
-const scraperService = new ScraperService_1.ScraperService(httpClient, logger, adRepository, scraperLogRepository, notifier);
+// Serviço de detalhes de anúncios
+const adDetailsService = new AdDetailsService_1.AdDetailsService(httpClient, logger);
+const scraperService = new ScraperService_1.ScraperService(httpClient, logger, adRepository, scraperLogRepository, notifier, adDetailsService);
 // Função para executar o scraping
 const runScraping = () => {
     const currentConfig = (0, config_1.loadConfig)();

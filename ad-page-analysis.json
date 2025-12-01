@@ -1,0 +1,48 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "T.Santos",
+  "makesOffer": {
+    "@type": "Offer",
+    "priceSpecification": {
+      "@type": "UnitPriceSpecification",
+      "priceCurrency": "BRL",
+      "price": "59500"
+    },
+    "itemOffered": {
+      "@type": "Car",
+      "name": "Chevrolet Onix Hatch LT 1.0 12V Flex Mec. 4P 2022",
+      "description": "ONIX LT2 2023<br>Veículo seminovo<br>Todo original <br>Ipva 2025 ok <br>Higienizado  <br>Wats : 9599170-7284<br><br><br><br><br><br><br><br><br>Onix ; gol ; argo; Fiesta; sandero ; kwid ; ford ka; Mobi ; march; Hyundai; hb20 ; polo ; cronos ",
+      "image": [
+        {
+          "@type": "ImageObject",
+          "contentUrl": "https://img.olx.com.br/images/14/147540583859897.jpg"
+        },
+        {
+          "@type": "ImageObject",
+          "contentUrl": "https://img.olx.com.br/images/15/158529702623331.jpg"
+        },
+        {
+          "@type": "ImageObject",
+          "contentUrl": "https://img.olx.com.br/images/17/177541581362405.jpg"
+        },
+        {
+          "@type": "ImageObject",
+          "contentUrl": "https://img.olx.com.br/images/18/187515229670452.jpg"
+        },
+        {
+          "@type": "ImageObject",
+          "contentUrl": "https://img.olx.com.br/images/20/207541589475928.jpg"
+        }
+      ],
+      "brand": "Chevrolet",
+      "model": "Chevrolet Hatch LT 1.0 12V Flex Mec. 4P",
+      "numberOfDoors": "4 portas",
+      "modelDate": "2022",
+      "vehicleTransmission": "Manual",
+      "fuelType": "Flex",
+      "mileageFromOdometer": "76000",
+      "bodyType": "Hatch"
+    }
+  }
+}

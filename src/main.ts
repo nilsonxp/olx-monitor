@@ -4,6 +4,7 @@ import { AdRepository } from './infrastructure/repositories/AdRepository';
 import { ScraperLogRepository } from './infrastructure/repositories/ScraperLogRepository';
 import { Notifier } from './infrastructure/notification/Notifier';
 import { ScraperService } from './core/services/ScraperService';
+import { AdDetailsService } from './core/services/AdDetailsService';
 import { config, loadConfig } from './config';
 import cron from 'node-cron';
 
@@ -13,12 +14,16 @@ const httpClient = new HttpClient();
 const adRepository = new AdRepository(logger);
 const scraperLogRepository = new ScraperLogRepository(logger);
 const notifier = new Notifier();
+// Serviço de detalhes de anúncios
+const adDetailsService = new AdDetailsService(httpClient, logger);
+
 const scraperService = new ScraperService(
   httpClient,
   logger,
   adRepository,
   scraperLogRepository,
-  notifier
+  notifier,
+  adDetailsService
 );
 
 // Função para executar o scraping

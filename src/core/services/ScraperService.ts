@@ -5,18 +5,24 @@ import { IScraperLogRepository, ScraperLog } from '../interfaces/IScraperLogRepo
 import { INotifier } from '../interfaces/INotifier';
 import { Ad } from '../entities/Ad';
 import { AdService } from '../services/AdService';
+import { AdDetailsService } from './AdDetailsService';
 import { UrlUtils } from '../utils/UrlUtils';
 import { PriceUtils } from '../utils/PriceUtils';
 import * as cheerio from 'cheerio';
 
 export class ScraperService {
+  private adDetailsService?: AdDetailsService;
+
   constructor(
     private readonly httpClient: IHttpClient,
     private readonly logger: ILogger,
     private readonly adRepository: IAdRepository,
     private readonly scraperLogRepository: IScraperLogRepository,
-    private readonly notifier: INotifier
-  ) {}
+    private readonly notifier: INotifier,
+    adDetailsService?: AdDetailsService
+  ) {
+    this.adDetailsService = adDetailsService;
+  }
 
   async scrape(url: string): Promise<void> {
     let page = 1;
@@ -94,7 +100,7 @@ export class ScraperService {
       this.logger.info(`Checking new ads for: ${searchTerm}`);
       this.logger.info('Ads found: ' + adList.length);
 
-    const adService = new AdService(this.adRepository, this.logger, this.notifier);
+    const adService = new AdService(this.adRepository, this.logger, this.notifier, this.adDetailsService);
 
       for (const advert of adList) {
         const ad = new Ad({
