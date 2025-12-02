@@ -113,7 +113,7 @@ export class AdService {
       this.logger.info('Price changed for ad: ' + ad.id);
       if (ad.price < saved.price) {
         const percentage = Math.abs(Math.round(((ad.price - saved.price) / saved.price) * 100));
-        let msg = `💰 Redução de preço encontrada! ${percentage}% OFF!\n\nDe R$ ${saved.price.toLocaleString('pt-BR')} para R$ ${ad.price.toLocaleString('pt-BR')}\n\n`;
+        let msg = `💰 Redução de preço encontrada! ${percentage}% OFF!\n\n${ad.title}\n\nDe R$ ${saved.price.toLocaleString('pt-BR')} para R$ ${ad.price.toLocaleString('pt-BR')}\n\n`;
         
         // Se for anúncio de veículo, inclui detalhes atualizados
         if (this.isVehicleAd(ad) && this.adDetailsService) {
